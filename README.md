@@ -1,5 +1,7 @@
 # Systems Lab
 
+**Live:** https://aakif9866.github.io/systems-lab/
+
 Ten advanced systems explained from first principles, diagrammed from real code, and running as **mini engines in your browser**. It's a static Next.js site with no backend and no accounts, and it deploys to Vercel for free.
 
 | # | System | Mini engine (runs in the tab) | Production language |

@@ -30,9 +30,11 @@ _Last updated: 2026-11-21_
 |---|---|
 | `pnpm test` (engine unit + property-style tests) | **77 / 77 pass** (~0.8 s) |
 | `pnpm lint` | clean (0 errors, 0 warnings) |
-| `pnpm contrast` | all text tokens ≥ 4.5:1 |
+| `pnpm contrast` | all text tokens ≥ 4.5:1 in both themes |
 | `pnpm build` | 16 static pages, type-check clean |
 | `pnpm e2e` (headless Chrome, real clicks/typing) | **12 / 12 pass** |
+| `pnpm e2e:nav` (client nav, back, scroll, anchors, active nav, 404, white toggle) | **15 / 15 pass** |
+| Live deployment smoke test (13 pages, favicon, 404, 2 playgrounds) | pass, 0 console errors |
 | Responsive check (320 / 375 / 768 / 1024 / 1920 px, all 13 pages) | no horizontal overflow |
 
 The highlights from the engine tests:
@@ -58,10 +60,10 @@ The highlights from the engine tests:
 
 ## Deployment status
 
-Deployed to GitHub Pages from the `gh-pages` branch (built with `BASE_PATH=/systems-lab`). Vercel also works from the repo root with no configuration.
+**Live at https://aakif9866.github.io/systems-lab/**, deployed to GitHub Pages from the `gh-pages` branch (built with `BASE_PATH=/systems-lab`). Vercel also works from the repo root with no configuration.
 
 ## Next actionable tasks
 
-1. Push to GitHub and import into Vercel (user step).
+1. Redeploy after changes: `BASE_PATH=/systems-lab pnpm build && touch out/.nojekyll`, then push `out/` to `gh-pages`.
 2. Optional: add a GitHub Actions workflow running `pnpm check`.
 3. Optional, the long-term spec: start Phase 1 of the real C++/Rust platform described on `/roadmap`.
