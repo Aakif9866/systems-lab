@@ -62,3 +62,32 @@ scripts/                contrast check, browser E2E
 ```
 
 The engines emit events in the platform's standard execution envelope (`execution_id, project, event_type, timestamp, source, payload`). The production C++/Rust platform described on `/architecture` would use that same format.
+
+## Versions
+
+### v1 — this release ✅
+A static, $0 learning site. Ten systems explained with interactive diagrams, each paired with a **real TypeScript mini engine** that runs in the browser. Network, threads, clock and kernel are simulated, and each playground labels which parts. Includes a Phosphor+ theme with a black/white toggle, 77 engine tests, browser E2E and navigation checks, and is deployed on GitHub Pages.
+
+### v2 — the real C++/Rust platform (planned)
+Replace the in-browser mini engines with the production systems from the original spec (`docs/spec/prompt1.txt`, `docs/spec/prompt2.txt`), following the build plan in `docs/spec/plan.txt`.
+
+**Scope**
+- Ten real systems in **Rust** (distributed DB, async runtime, broker, proxy, container runtime) and **C++** (compiler, allocator, query engine, Redis engine, VCS), each independently buildable and tested.
+- **Rust/Axum control plane** with email/password auth, experiment history and learning progress (PostgreSQL).
+- **Execution agent** that runs each system in isolation: process sandbox on the hosted tier, Docker containers locally. All systems use one stdin/stdout JSONL contract and emit the same event envelope the v1 engines already use, so the playgrounds swap engines with minimal UI change.
+- Live metrics, logs and traces (Prometheus/Grafana/OpenTelemetry), real benchmarks, failure injection.
+
+**Prerequisites**
+- Local: Rust (rustup), CMake, Docker Desktop with 8 GB of memory.
+- Free accounts: Hugging Face Space (backend + systems), Neon (Postgres), Supabase Storage or Cloudflare R2, Grafana Cloud, Brevo (email).
+
+**Order**
+1. Foundation: Rust backend, auth, database, local Docker setup.
+2. Execution framework and event protocol.
+3. Distributed DB in Rust, using v1's Raft/LSM engine and tests as the reference.
+4. Wire it into the site, validate isolation, first deploy.
+5. The remaining nine systems on the same pattern. The container runtime goes last because it needs a dedicated Linux host.
+
+**Carried over from v1:** engines as reference implementations, their 77 tests as specs to port, all content, diagrams, UI and the event format.
+
+**Effort estimate:** about 1–2 months for steps 1–4, then 2–6 weeks per system.
