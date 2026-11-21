@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/* Phosphor+ — terminal minimal on pure black, with one terminal colour per project.
+   All colour lives in these tokens; components never use raw hex. Contrast is checked by scripts/contrast.mjs. */
+:root {
+  --bg: #000000;
+  --surface: #0d0d0d;
+  --surface-2: #161616;
+  --border: #222222;
+  --text: #b8c0b8; /* body copy */
+  --heading: #f0f5f0; /* headings / active */
+  --muted: #8a938a; /* secondary copy (AA on black) */
+  --dim: #4a524a; /* decoration only — never body text */
+  --accent: #17ff00; /* caret / focus: the one hot element */
+  --error: #f87171;
+
+  /* project hues */
+  --h-green: #4ade80;
+  --h-cyan: #22d3ee;
+  --h-amber: #fbbf24;
+  --h-magenta: #f472b6;
+  --h-blue: #60a5fa;
+  --h-orange: #fb923c;
+  --h-violet: #a78bfa;
+  --h-yellow: #facc15;
+  --h-teal: #2dd4bf;
+  --h-coral: #f87171;
+  color-scheme: dark;
+}
+
+/* white: the same minimal layout, ink on paper; hues darkened to keep ≥ 4.5:1 */
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #f3f4f2;
+  --surface-2: #eceeea;
+  --border: #d9dcd6;
+  --text: #2b302b;
+  --heading: #0a0c0a;
+  --muted: #565e56;
+  --dim: #b7bcb5;
+  --accent: #0b7a00;
+  --error: #b91c1c;
+
+  --h-green: #166534;
+  --h-cyan: #155e75;
+  --h-amber: #92400e;
+  --h-magenta: #be185d;
+  --h-blue: #1d4ed8;
+  --h-orange: #9a3412;
+  --h-violet: #6d28d9;
+  --h-yellow: #854d0e;
+  --h-teal: #0f766e;
+  --h-coral: #b91c1c;
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-heading: var(--heading);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-accent: var(--accent);
+  --color-error: var(--error);
+  --color-hue: var(--hue, var(--h-green));
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--hue, var(--accent));
+  color: var(--bg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* blinking block caret */
+.caret {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 400ms ease-out,
+    transform 400ms ease-out;
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* scrollbars that belong on black */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface-2) transparent;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

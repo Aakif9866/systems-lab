@@ -1,0 +1,132 @@
+Ready for review
+Select text to add comments on the plan
+Systems Lab — Unified Build Plan (prompt1 + prompt2, $0 stack)
+Context
+prompt1.txt specifies the product: 10 real C++/Rust systems with a unified interactive learning UI. prompt2.txt makes the architecture mandatory: 5 layers, a generic control plane, a standard execution contract, and a fixed build order. The repo is empty, holding only those two files. This plan merges both into one executable roadmap, resolves where they conflict, and swaps every paid service for a free-forever option, as the user asked. Auth is email/password.
+
+Honest scope: this is months of work. The plan stays safe by proving the whole pipeline end-to-end on one system (Distributed DB) before the other nine copy it. Every phase ends with a working, deployable state.
+
+1. Conflicts resolved
+Topic	prompt1	prompt2	Decision
+Backend shape	apps/api + apps/execution-manager	Rust control plane + execution agents	apps/control-plane (Rust/Axum) + apps/exec-agent (Rust). Only the agent touches Docker.
+Phase order	foundation → learning UI → all systems	foundation → exec framework → Distributed DB → integrate → validate → other 9	prompt2 order (mandatory). The learning-UI components get built during Phases 3–4 against real DB data.
+Service comms	gRPC or HTTP	REST + WS	REST/JSON + WebSocket only. No protobuf, since nothing needs it. Add it later only if agent↔control-plane traffic becomes a bottleneck.
+Redis	"where useful"	"where required"	Dropped. Nothing requires it with one control-plane instance. Rate limits and WS tickets stay in-memory or in Postgres.
+Hosting	paid compute assumed	paid compute assumed	Free stack (§2)
+2. Free-forever stack
+Need	Free choice	Notes / limits
+Frontend	Vercel Hobby (*.vercel.app)	Non-commercial use is OK for a portfolio
+Backend compute	Hugging Face Spaces, Docker SDK, free "CPU basic" (2 vCPU, 16 GB RAM, public HTTPS *.hf.space URL, WebSockets OK, no card). One image runs control-plane + exec-agent together.	No Docker socket and no root inside a Space, so the agent uses its process driver (§3). The Space sleeps after ~48 h idle (cold start ~30 s) and its disk is ephemeral, so all state lives in Neon/R2.
+Local / self-host	docker compose on the Mac, using the agent's docker driver (full container isolation + the privileged container-runtime profile)	Same code; drivers are switched by env var
+Postgres	Neon free (0.5 GB, no card)	
+Object storage	Cloudflare R2 free (10 GB)	Needs a card. Fallback: Supabase Storage free (1 GB, no card) via the same S3 API
+Email (verify/reset)	Brevo free SMTP (300/day) via the lettre crate	Verified single-sender address
+Observability	Grafana Cloud free (metrics, logs, traces; no card). The Space pushes OTLP straight to it. Local compose runs Prometheus + Grafana + Tempo + Loki.	14-day retention on the free tier
+CI/CD + registry	GitHub Actions (public repo) + GHCR	Deploy = push the image tag to the Space repo
+Edge protection	HF's own proxy + control-plane rate limits + quotas	
+Cookie problem (vercel.app ↔ hf.space are cross-site): Next.js rewrites proxy /api/* to the Space, so the session cookie is first-party on vercel.app. WebSockets can't pass through Vercel, so the browser asks /api/ws-ticket for a 30-second single-use ticket and connects directly to wss://<space>.hf.space/ws?ticket=….
+
+Upgrade path: if a real Linux VM becomes available later, the docker driver deploys unchanged with compose.prod.yml. Nothing gets rewritten.
+
+3. Architecture (5 layers)
+Browser ─HTTPS─> Vercel (Next.js) ─rewrite /api─> HF Space :7860 ─> control-plane (Axum)
+   └──────────── WSS (ticket) ─────────────────> HF Space ─> control-plane
+control-plane ─in-process trait call (Space) | authenticated HTTP+WS (compose)─> exec-agent
+exec-agent driver = process (Space): sandboxed child processes  |  docker (local): containers
+systems ─stdout JSONL events + metrics─> exec-agent ─> control-plane ─> WS fan-out + Postgres
+agent metrics (/proc or docker stats) + OTel traces ─> Grafana Cloud (prod) | local Grafana stack
+The agent is a library crate with a Driver trait that has exactly two implementations, process and docker. Two real implementations is the threshold where a trait earns its keep. In the Space, the control plane calls it in-process. In compose, a thin binary runs it as a separate service holding the Docker socket.
+
+The one execution contract (key design decision)
+Every system ships one binary in its own Docker image that speaks the same protocol, whatever its language:
+
+stdin: newline-delimited JSON commands {"id":..,"cmd":"put","args":{..}}
+stdout: newline-delimited JSON events in the prompt2 envelope {execution_id, project, event_type, timestamp, source, payload}, plus periodic event_type:"metrics" events carrying project-specific counters
+stderr: structured JSON logs
+Network systems (DB nodes, Redis engine, broker, proxy) also listen on real ports inside the execution's private network. Their workload generators are real clients running in a sidecar container.
+That gives Start/Stop/Restart/Reset (container lifecycle), Configure (env + config file), Execute (stdin), Workload (sidecar), Logs (stderr), Metrics (events + docker stats for CPU/mem/net/disk), Events (stdout), and Health (container health + a ping cmd). No HTTP library is needed inside the C++ systems. Shared emitters: crates/lab-protocol (Rust) and systems/_cpp/lab_protocol.hpp (header-only, about 100 lines).
+
+Generic control plane: each system has systems/<x>/lab/manifest.yaml with id, language, image, config JSON-Schema, allowed commands, resource limits, privileged: bool, and multi-container topology. The control plane validates against the manifest and has zero project-specific code.
+
+Execution lifecycle and safety
+States: idle → provisioning → starting → running → stopping → completed | failed | timed_out.
+
+docker driver (local): --cpus, --memory, --pids-limit, read-only rootfs + tmpfs, --cap-drop ALL, no-new-privileges, seccomp default, no host mounts, internal-only network (no egress).
+process driver (Space): each execution runs in its own process group, launched with setrlimit (CPU seconds, address space, NPROC, FSIZE, NOFILE), a fresh temp workdir that gets deleted afterwards, a cleared env, and the binary picked from a fixed allowlist with argv built from the validated manifest config (never a shell). Multi-node systems bind only to 127.0.0.1 on agent-assigned ports. CPU/mem/io metrics come from /proc/<pid>. Why this is safe enough: users never run native code. They send allowlisted commands and config to our binaries. Compiler programs run inside our bytecode VM, which exposes no syscalls. The docs state plainly that this is weaker isolation than containers.
+Hard TTL per execution (default 10 min). A WS heartbeat lease stops the execution 60 s after the last client disconnects. A startup reaper kills orphans (process groups or containers labeled systemslab=1).
+Quotas: one concurrent execution per user and N per day. A global cap (about 4 concurrent executions) protects the 2-vCPU Space.
+privileged:true manifests (container runtime only) are refused by the process driver. They run only through the docker driver's privileged profile on a dedicated Linux host (locally that's Docker Desktop's VM). On the public site that project's Playground shows "requires a dedicated Linux host — run locally with make lab-container-runtime" plus benchmark results from real local runs, clearly labeled with date and host.
+Commands are allowlisted per manifest. No shell is reachable anywhere. Every start/stop/inject goes to audit_log.
+Auth (email/password)
+argon2id hashes, server-side sessions in Postgres (HttpOnly, Secure, SameSite=Lax cookie), email verification + password reset via single-use hashed tokens (Brevo), login rate limiting per IP/email, CSRF protection through SameSite plus an Origin check. Unverified users can browse but not execute.
+
+Postgres schema (sqlx migrations)
+users, sessions, email_tokens, executions(id,user_id,project,config jsonb,state,started_at,ended_at,error), execution_events(execution_id,seq,type,ts,payload jsonb) (capped per execution; full log goes to R2 on completion), benchmarks(id,execution_id,project,config,results jsonb,simulated bool), progress(user_id,kind,ref,completed_at), audit_log. Project, experiment and learning-path content lives in the repo (manifests/MDX), not the DB.
+
+4. Repo layout (from prompt1, adjusted)
+systems-lab/
+  Cargo.toml                 # workspace: control-plane, exec-agent, crates/*, Rust systems
+  apps/web/                  # Next.js 15 App Router, TS, Tailwind, shadcn/ui, Zustand, TanStack Query,
+                             # React Flow, Recharts, Monaco, Framer Motion
+  apps/control-plane/        # Axum, sqlx, tower-sessions-style sessions, tracing + OTel
+  apps/exec-agent/           # bollard (Docker API), manifest runner, reaper
+  crates/lab-protocol/       # envelope types, shared by agent + Rust systems; TS types generated via ts-rs
+  systems/<10 dirs>/         # each: src, tests, bench, Dockerfile, lab/{manifest.yaml,architecture.json,
+                             #        experiments/*.yaml, docs/*.mdx}
+  systems/_cpp/              # lab_protocol.hpp, doctest.h, shared CMake preset
+  infrastructure/            # compose files, Caddyfile, prometheus/grafana/tempo/loki configs, oracle setup script
+  docs/                      # Mermaid architecture docs required by prompt2 §6
+  .github/workflows/         # path-filtered per-system CI + deploy
+  DEVELOPMENT_STATUS.md
+Skipped from prompt1: packages/ui|diagrams|telemetry|api-client. With one frontend they would just be folders inside apps/web. shared-types gets replaced by ts-rs codegen from lab-protocol.
+
+Keeping diagrams honest: architecture.json (React Flow nodes) lists real file paths for each component. A CI script fails if a referenced path doesn't exist. Code Explorer bundles systems/<x>/src into the web build as static data, so it needs no backend.
+
+5. Phases (prompt2 order; every phase ends deployable and recorded in DEVELOPMENT_STATUS.md with a short engineering report)
+Phase 1 — Foundation
+
+Monorepo, Cargo workspace, Next.js app with the dark design system (charcoal, cyan/green accent, mono type), all 9 nav routes stubbed with real empty states (no fake data).
+Control plane: health, auth (signup/verify/login/logout/reset), migrations.
+docker-compose.yml (web, control-plane, exec-agent, postgres, prometheus, grafana, otel-collector, tempo, loki, mailpit for local email).
+CI: lint, typecheck, cargo test, web build.
+Done when: docker compose up works on macOS, sign up → verify (mailpit) → log in works, and CI is green.
+Phase 2 — Execution framework
+
+lab-protocol, lab_protocol.hpp, manifest schema plus validation, exec-agent (bollard lifecycle, limits, reaper, stdout→events, docker stats→metrics), control-plane executions API + WS ticket + fan-out + lease/TTL, audit log.
+Test it with a tiny systems/_echo system written in both Rust and C++.
+Frontend generic components: ExecutionConsole, ExperimentControls, EventTimeline, LogViewer, LiveMetricsDashboard.
+Done when: echo starts from the UI under both drivers, streams events, is killed by TTL and by disconnect, and integration tests cover each state transition plus limits (a memory-hog test gets killed and reports failed).
+Phase 3 — Distributed DB (Rust) Built in order, each piece unit-tested: memtable → WAL (+ crash recovery test) → SSTable + bloom filter → LSM levels + compaction → B-tree index for SSTable blocks → snapshots → Raft (election, log replication, membership; deterministic tests with a simulated network, plus fault injection: kill, partition, delay) → 5-node cluster in 5 containers + a workload sidecar. Events: leader_changed, append_entries, wal_append, flush, compaction, ….
+
+Phase 4 — Integrate DB with the learning UI Build all 9 standard tabs as reusable components (ProjectOverview, ArchitectureExplorer with multiple views + ComponentInspector + request tracing, Learn Internals MDX, Playground, Visualizer = node topology / replication timeline / WAL inspector / LSM view, CodeExplorer, Experiments with expected-vs-actual, BenchmarkComparison, Docs) + ExperimentHistory + LearningProgress. This delivers prompt1's "final vision" user journey end-to-end.
+
+Phase 5 — Validate Playwright E2E for the DB journey, isolation checks for both drivers (rlimits enforced, TTL, orphan reaping; plus no egress and caps dropped for docker), Grafana dashboards, OTel traces spanning web → control plane → agent, stress run at the global cap. First production deploy: HF Space + Neon + R2/Supabase + Grafana Cloud + Vercel, so deployment risk is retired early.
+
+Phase 6 — Remaining 9 systems Each follows the same template: spec → architecture.json → core + tests → events/metrics → manifest → experiments → bench → docs → deploy. Order runs from least to most risky:
+
+Memory Allocator (C++): arena/slab/pool/malloc-style, alignment, TLS caches, fragmentation, leak detection. Benchmarks against glibc malloc.
+Version Control (C++): SHA-1 CAS, blob/tree/commit, index, branches, Myers diff, 3-way merge, delta + packfiles.
+Compiler + VM (C++): lexer → parser → AST → typecheck → IR → optimizer (const-fold, DCE) → bytecode → VM + mark-sweep GC. JIT skipped (optional in spec).
+Query Engine (C++): SQL subset parser → relational algebra → cost-based planner → scans, index scan, hash/sort-merge join, aggregates, vectorized columnar batches.
+Redis-like Engine (C++): epoll event loop, RESP, hash/zset (skiplist), TTL, AOF/RDB, pub/sub, MULTI/EXEC, replica. Real redis-benchmark-style client sidecar.
+Async Runtime (Rust): futures, wakers, work-stealing executor, timer wheel, epoll reactor, cancellation, bounded channels. Instrumented poll/wake events. Docs cover Pin/Send/Sync.
+Message Broker (Rust): segmented log, topics/partitions, consumer groups + rebalancing, offsets, replication with ISR, at-least/at-most-once.
+Reverse Proxy (Rust, hyper): RR/least-conn/consistent hashing, pooling, health checks, circuit breaker, retries, token bucket, TLS termination (rustls, self-signed in the sandbox), backend sidecars with injectable latency/failure.
+Container Runtime (Rust): clone + namespaces (pid/mnt/uts/net/ipc/user), cgroup v2 limits, pivot_root, veth networking, OCI-like bundle. Runs only via the docker driver's privileged profile (local/dedicated Linux host), never on the public Space. The UI labels real-isolation results vs explanatory visuals.
+Phase 7 — Production deploy of everything deploy.yml builds one Space image (control-plane + embedded agent + all nine non-privileged system binaries, multi-stage Rust + CMake build) → pushes to the HF Space git repo with HF_TOKEN. The Space listens on port 7860 and secrets go in Space settings. Vercel deploys from git. Neon migrations run on control-plane start.
+
+Phase 8 — E2E against production Playwright suite runs against the public URLs: one journey per system plus auth, quota, TTL and disconnect cleanup.
+
+6. Per-system definition of done (checked in DEVELOPMENT_STATUS.md)
+Builds standalone (cargo build -p <x> / cmake --preset default) · unit + integration tests pass in CI · bench binary produces real numbers · manifest validates · architecture.json path check passes · ≥3 guided experiments run against the real binary · events drive the visualizer · docs cover every prompt2 §6 item (components, data flow, lifecycle, storage, concurrency, failure handling, interfaces) · runs in production.
+
+7. Engineering rules carried forward
+No mock data in production paths. A simulated flag on synthetic workloads shows as a UI badge. Never claim a feature is done before tests pass. Explain simplifications in docs. Tests: Rust cargo test + proptest where it pays off; C++ doctest via ctest; web Vitest for logic + Playwright E2E.
+
+8. Verification (per phase and final)
+Local: docker compose up → open http://localhost:3000 → sign up (mailpit at :8025) → run an experiment → check Grafana at :3001 shows its CPU/mem and Tempo shows the trace.
+CI: all workflows green, including the diagram-path check and per-system tests.
+Isolation: integration tests run against both drivers and assert that a memory hog gets killed by its limit, TTL expires, disconnect cleanup leaves zero orphans, the process driver refuses privileged manifests, and (docker only) egress is blocked.
+Production: Playwright against https://<app>.vercel.app covering the full DB journey (start 5-node cluster → write → kill leader → observe new leader → benchmark), then one journey per system.
+9. Immediate next step after approval
+Start Phase 1 only: scaffold the monorepo, design system, auth, and compose stack. Then stop and give a phase report before Phase 2.

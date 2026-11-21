@@ -1,0 +1,388 @@
+ADDITIONAL ARCHITECTURE DIRECTIVE — SYSTEMS LAB
+This is an extension to the original Systems Lab specification.
+
+Do not replace the original requirements or remove any of the ten systems projects.
+
+The following architecture decisions are mandatory and should guide the implementation of the entire platform.
+
+1. CORE ARCHITECTURE
+Build Systems Lab using a clearly separated architecture consisting of five major layers.
+
+Layer 1: Frontend — Vercel
+Technology:
+
+Next.js
+TypeScript
+Tailwind CSS
+shadcn/ui
+React Flow
+Monaco Editor
+Recharts
+Responsibilities:
+
+User interface.
+Interactive learning environment.
+Architecture visualization.
+Code exploration.
+Experiment configuration.
+Execution controls.
+Live metrics and logs.
+Learning progress.
+API communication.
+Deployment:
+
+Deploy the Next.js application on Vercel.
+Keep the frontend independent of the systems execution infrastructure.
+Use environment variables for backend URLs.
+Implement proper loading, error and connection states.
+The frontend must never directly execute native C++ or Rust binaries.
+
+Layer 2: Backend Control Plane
+Technology:
+
+Rust (preferred).
+Axum or an equivalent production-ready framework.
+PostgreSQL.
+Redis where required.
+WebSockets / SSE.
+Docker API through a restricted execution service.
+Responsibilities:
+
+Authentication and authorization.
+User and project management.
+Experiment management.
+Execution orchestration.
+Configuration validation.
+Workload lifecycle management.
+Resource allocation.
+Execution status.
+Telemetry aggregation.
+Learning progress.
+Experiment history.
+The control plane must coordinate the systems projects without becoming tightly coupled to their internal implementations.
+
+Expose well-defined REST APIs and WebSocket endpoints.
+
+Layer 3: Systems Execution Layer
+This is where the actual C++ and Rust implementations run.
+
+Do not treat the systems projects as backend API mockups.
+
+Each project must be a real executable system.
+
+Rust-based systems:
+
+Distributed database.
+Async runtime.
+Message broker.
+Reverse proxy.
+Container runtime components where appropriate.
+C++-based systems:
+
+Compiler.
+Memory allocator.
+Query engine.
+Redis-like engine.
+Git-like version control implementation.
+Select languages based on the technical requirements of individual components. Mixed-language implementations are allowed when justified.
+
+Every system must expose a consistent execution interface.
+
+Standard capabilities:
+
+Start.
+Stop.
+Restart.
+Reset.
+Configure.
+Execute commands.
+Generate workload.
+Retrieve logs.
+Retrieve metrics.
+Stream execution events.
+Report health.
+Do not force every system to use an identical internal architecture. Standardize the external interface while preserving implementation-specific internals.
+
+Layer 4: Observability
+Technology:
+
+Prometheus.
+Grafana.
+OpenTelemetry.
+Structured JSON logging.
+PostgreSQL for persistent experiment metadata.
+Capture actual execution information.
+
+Metrics should include:
+
+CPU utilization.
+Memory usage.
+Network throughput.
+Disk I/O.
+Request throughput.
+Request latency.
+P50/P95/P99.
+Error rate.
+Active connections.
+Queue depth.
+Task counts.
+Storage utilization.
+Project-specific metrics should also be available.
+
+Examples:
+
+Distributed database: replication lag, leader changes, WAL size.
+Async runtime: active tasks, poll counts, wake counts.
+Message broker: consumer lag, partition throughput.
+Memory allocator: allocation count, fragmentation, free blocks.
+Query engine: rows scanned, execution time, join operations.
+Reverse proxy: backend distribution, retries, circuit breaker state.
+The frontend must consume metrics from actual running systems.
+
+Avoid fabricated metrics and static chart data in production mode.
+
+Layer 5: Persistent Storage
+Use PostgreSQL for:
+
+User accounts.
+Project metadata.
+Experiment configurations.
+Execution history.
+Learning progress.
+Benchmark summaries.
+System configurations.
+Use appropriate object storage for:
+
+Benchmark reports.
+Large execution artifacts.
+Compiled binaries where persistence is needed.
+Experiment exports.
+Use local volumes or dedicated storage for systems that require persistent databases or filesystems.
+
+Do not use PostgreSQL as a substitute for the custom storage engines being built.
+
+2. DEPLOYMENT ARCHITECTURE
+The production architecture must follow this separation:
+
+Frontend:
+Vercel
+
+Backend:
+Dedicated Linux-based cloud compute
+
+Systems:
+Isolated Docker containers or dedicated execution hosts
+
+Database:
+Managed PostgreSQL
+
+Caching:
+Redis where appropriate
+
+Observability:
+Prometheus + Grafana + OpenTelemetry
+
+Logs:
+Centralized structured logging
+
+The Vercel frontend communicates with the control plane over HTTPS and secure WebSockets.
+
+The control plane communicates with execution agents through authenticated internal APIs.
+
+Execution agents manage isolated system containers.
+
+Never expose the Docker daemon, unrestricted shell access, privileged containers or arbitrary native code execution to the public frontend.
+
+Use:
+
+Authentication.
+Authorization.
+Per-user resource limits.
+CPU and memory limits.
+Execution timeouts.
+Network restrictions.
+Container isolation.
+Automatic cleanup.
+Audit logging.
+Container-runtime experiments requiring privileged Linux capabilities must run on dedicated isolated hosts, not on the general public execution pool.
+
+3. STANDARD SYSTEM EXECUTION CONTRACT
+Create a reusable execution framework.
+
+Every systems project should implement an adapter or execution service that supports a consistent lifecycle.
+
+Conceptual interface:
+
+trait SystemExecutor {
+async fn start(&self, config: Config) -> Result<ExecutionId>;
+async fn stop(&self, id: ExecutionId) -> Result<()>;
+async fn restart(&self, id: ExecutionId) -> Result<()>;
+async fn reset(&self, id: ExecutionId) -> Result<()>;
+async fn status(&self, id: ExecutionId) -> Result<Status>;
+async fn metrics(&self, id: ExecutionId) -> Result<Metrics>;
+async fn logs(&self, id: ExecutionId) -> Result<Vec<LogEntry>>;
+}
+This is a conceptual contract. Adapt it to the actual execution framework and asynchronous implementation.
+
+Do not artificially implement unsupported functionality just to satisfy a common interface.
+
+Execution events should use a common envelope:
+
+{
+"execution_id": "execution-123",
+"project": "distributed-database",
+"event_type": "node_leader_changed",
+"timestamp": "2026-11-20T10:00:00Z",
+"source": "node-2",
+"payload": {}
+}
+Each project can define its own event payload schema.
+
+The frontend should use these events to drive its visualizations.
+
+4. REAL-TIME INTERACTION
+Implement a reusable real-time communication architecture.
+
+The execution lifecycle should be:
+
+User selects a project.
+User configures an experiment.
+Frontend sends an authenticated request to the control plane.
+Control plane validates the request.
+Execution manager provisions an isolated environment.
+The selected system starts.
+System emits structured events and metrics.
+Execution agent collects and forwards telemetry.
+Frontend receives updates through WebSockets or SSE.
+Visualizations update based on actual execution data.
+User stops or resets the experiment.
+Resources are released and results are stored.
+Provide clear execution states:
+
+Idle.
+Provisioning.
+Starting.
+Running.
+Stopping.
+Completed.
+Failed.
+Timed out.
+Ensure disconnections do not accidentally leave workloads running indefinitely.
+
+5. UNIFIED FRONTEND EXPERIENCE
+All ten systems should feel like part of the same product.
+
+Create reusable frontend components:
+
+ProjectOverview.
+ArchitectureExplorer.
+ComponentInspector.
+CodeExplorer.
+ExecutionConsole.
+ExperimentControls.
+LiveMetricsDashboard.
+EventTimeline.
+LogViewer.
+BenchmarkComparison.
+ExperimentHistory.
+LearningProgress.
+Each project can customize its own visualizations.
+
+For example:
+
+Distributed database:
+
+Node topology.
+Replication timeline.
+WAL inspector.
+LSM tree visualizer.
+Compiler:
+
+Token stream.
+AST explorer.
+IR viewer.
+Bytecode inspector.
+Memory allocator:
+
+Heap visualization.
+Allocation timeline.
+Fragmentation inspector.
+Message broker:
+
+Partition topology.
+Producer/consumer visualization.
+Offset explorer.
+The common interface should remain consistent while the project-specific learning experiences remain technically accurate.
+
+6. ARCHITECTURE DOCUMENTATION
+Before implementing the complete platform, produce:
+
+System context diagram.
+High-level platform architecture.
+Frontend architecture.
+Backend control plane architecture.
+Execution infrastructure architecture.
+Telemetry and observability architecture.
+Database schema.
+API specification.
+WebSocket event specification.
+Deployment architecture.
+Security architecture.
+Monorepo dependency diagram.
+Use Mermaid for repository documentation and React Flow for interactive frontend diagrams.
+
+For every system project, separately document:
+
+Component architecture.
+Internal data flow.
+Execution lifecycle.
+Storage architecture.
+Threading/concurrency model.
+Failure handling.
+External interfaces.
+7. DEVELOPMENT AND DEPLOYMENT STRATEGY
+Build in this order:
+
+Phase 1:
+Establish the monorepo, Next.js frontend, backend control plane, database and Docker-based local infrastructure.
+
+Phase 2:
+Implement the common execution framework, event protocol, logging and telemetry.
+
+Phase 3:
+Implement one complete systems project: Distributed Database.
+
+Phase 4:
+Integrate its actual execution with the frontend learning environment.
+
+Phase 5:
+Validate local execution, resource isolation, observability and deployment.
+
+Phase 6:
+Use the established architecture to integrate the remaining nine projects.
+
+Phase 7:
+Deploy the frontend to Vercel and the backend/execution infrastructure to suitable Linux-based cloud compute.
+
+Phase 8:
+Run end-to-end tests against the deployed platform.
+
+8. FINAL ARCHITECTURAL PRINCIPLES
+Frontend and execution infrastructure must remain independent.
+Systems implementations must be real, not mocked.
+The control plane must not contain project-specific business logic unnecessarily.
+Every execution environment must be isolated.
+Every project must be independently buildable.
+Every project must expose useful observability.
+Architecture diagrams must match the real implementation.
+Visualizations must consume actual system events.
+Local development must be straightforward.
+Production deployment must be reproducible.
+Security and resource isolation must be designed from the beginning.
+The ultimate objective:
+
+A single deployed platform where users can learn, run, inspect, break, debug, benchmark and understand ten advanced systems implementations through one unified interface.
+
+Implement the architecture first. Make sure the foundation works before scaling it across all ten systems.
+
+Do not compromise engineering correctness for visual polish or speed of development.

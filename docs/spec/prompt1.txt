@@ -1,0 +1,876 @@
+PROJECT: SYSTEMS LAB
+An Interactive Systems Engineering, Simulation & Learning Platform
+Build a production-quality, full-stack platform called Systems Lab.
+
+The platform should contain 10 advanced systems-programming projects, implemented using C++, Rust, or both depending on technical suitability.
+
+The primary objective is to make complex systems engineering concepts easy to explore, understand, execute, visualize, experiment with, and deploy.
+
+This is NOT a collection of static educational articles, frontend simulations, or basic coding demos.
+
+Every project must have:
+
+A real working implementation.
+A beautiful interactive learning interface.
+Detailed architecture diagrams.
+Live execution and experimentation.
+Internal system observability.
+Configurable parameters.
+Benchmarks and performance metrics.
+Failure injection and recovery experiments where relevant.
+Deployment-ready infrastructure.
+The platform should make learning advanced C++, Rust, operating systems, networking, databases, concurrency and distributed systems accessible through direct experimentation.
+
+
+1. TECHNOLOGY STACK
+Frontend
+Use:
+
+Next.js (latest stable version).
+TypeScript.
+App Router.
+Tailwind CSS.
+shadcn/ui.
+Framer Motion for subtle interactions.
+Zustand for client-side state management.
+React Flow for interactive architecture diagrams.
+Recharts for metrics and performance charts.
+Monaco Editor for code exploration.
+TanStack Query for server state.
+WebSockets for real-time updates.
+The frontend must be deployed on Vercel.
+
+Backend and systems
+Use:
+
+Rust for networking services, async runtimes, distributed systems and infrastructure components where appropriate.
+C++ for low-level memory management, performance-intensive components and systems requiring direct memory control.
+Tokio for Rust asynchronous workloads where appropriate.
+CMake for C++ projects.
+Cargo workspaces for Rust projects.
+gRPC or HTTP APIs for communication between services.
+Protocol Buffers where structured service communication is useful.
+PostgreSQL for application metadata, user progress and experiment records.
+Redis where caching or ephemeral coordination is useful.
+Infrastructure
+Use:
+
+Docker and Docker Compose for local development.
+Linux-based deployment environments.
+GitHub Actions for CI/CD.
+Prometheus for metrics.
+Grafana for observability.
+OpenTelemetry for tracing.
+Cloudflare or an equivalent service for DNS and edge protection where appropriate.
+Deployment architecture:
+
+Frontend: Vercel.
+Application API/control plane: separately deployed backend.
+Systems execution workloads: isolated Linux containers or dedicated compute instances.
+Persistent storage: appropriate database and object storage.
+Real-time updates: WebSockets or SSE.
+Never attempt to run long-lived C++/Rust servers directly inside Vercel serverless functions.
+
+
+2. PLATFORM EXPERIENCE
+Create a polished developer-focused interface.
+
+Visual direction:
+
+Dark-first interface.
+Professional engineering dashboard aesthetic.
+Deep charcoal backgrounds.
+Subtle borders.
+Green or cyan accent colors.
+Monospace typography for technical information.
+Clear hierarchy and excellent spacing.
+Smooth but restrained animations.
+The interface should feel like a combination of:
+
+A systems engineering IDE.
+An interactive technical textbook.
+A cloud infrastructure dashboard.
+A simulation environment.
+Avoid making it look like a generic LMS.
+
+Main navigation
+Create the following sections:
+
+Dashboard
+Explore Systems
+Learning Paths
+Architecture Explorer
+Live Experiments
+Benchmarks
+Documentation
+My Progress
+Settings
+Dashboard
+Display:
+
+Available systems projects.
+Recently explored projects.
+Learning progress.
+Active experiments.
+Completed experiments.
+Recent benchmarks.
+Recommended next concepts.
+Include an overview of the 10 systems projects.
+
+Each project should have:
+
+Name.
+Short description.
+Programming language.
+Difficulty.
+Main concepts.
+Estimated learning effort.
+Implementation status.
+Deployment status.
+
+3. THE 10 SYSTEMS PROJECTS
+Build all 10 as independent, fully working modules under one unified platform.
+
+Each module must have its own backend implementation, documentation, architecture, tests and interactive learning interface.
+
+PROJECT 01: Distributed Database Engine
+Language: Rust primarily, C++ optional for performance-critical components.
+
+Build a miniature distributed database inspired by RocksDB, Redis and Cassandra.
+
+Implementation:
+
+Custom key-value storage engine.
+Write-Ahead Logging.
+LSM Trees.
+SSTables.
+B-tree indexing.
+Bloom filters.
+Memtables.
+Compaction.
+Snapshots.
+Raft consensus.
+Leader election.
+Replication.
+Failure recovery.
+Cluster membership.
+Learning interface:
+
+Visualize the database cluster.
+Show leader and follower nodes.
+Observe writes propagating across nodes.
+Visualize WAL entries.
+Explore LSM tree levels.
+Inspect SSTables and compaction.
+Kill nodes.
+Introduce network partitions.
+Observe leader elections.
+Inspect replication lag.
+Experiments:
+
+Write throughput.
+Read throughput.
+Replication latency.
+Node failure recovery.
+Storage efficiency.
+Consistency experiments.
+PROJECT 02: Operating System and Container Runtime
+Language: Rust and C++ where appropriate.
+
+Build a Linux container runtime with a simplified OCI-compatible execution model.
+
+Implementation:
+
+Process creation.
+Linux namespaces.
+Cgroups.
+Filesystem isolation.
+Resource limits.
+Process lifecycle management.
+Container networking.
+Image management.
+Container execution.
+Learning interface:
+
+Visualize process trees.
+Inspect namespace isolation.
+Compare host and container environments.
+Show CPU and memory usage.
+Observe process creation and termination.
+Experiment with resource limits.
+Experiments:
+
+CPU restrictions.
+Memory restrictions.
+Process isolation.
+Filesystem isolation.
+Network isolation.
+Clearly distinguish real OS-level isolation from educational visualization.
+
+PROJECT 03: Programming Language and Compiler
+Language: C++.
+
+Build a proper programming language and compiler.
+
+Implementation:
+
+Lexer.
+Parser.
+AST.
+Type checker.
+Semantic analysis.
+Intermediate representation.
+Bytecode generation.
+Virtual machine.
+Garbage collection.
+Compiler optimizations.
+Optional JIT compilation.
+Learning interface:
+
+Interactive code editor.
+Live tokenization.
+AST visualization.
+Syntax tree exploration.
+Type-checking errors.
+IR inspection.
+Bytecode visualization.
+Execution tracing.
+Optimization comparison.
+Allow users to write programs and execute them through the compiler.
+
+PROJECT 04: Redis-like In-Memory Database
+Language: C++.
+
+Implementation:
+
+TCP server.
+RESP-inspired protocol.
+Event-driven architecture.
+Epoll.
+Non-blocking sockets.
+Hash tables.
+Sorted sets.
+TTL.
+Persistence.
+Pub/Sub.
+Transactions.
+Replication.
+Learning interface:
+
+Interactive Redis CLI.
+Live connected-client dashboard.
+Command execution.
+Event loop visualization.
+Memory usage visualization.
+Key expiration.
+Network packet and request flow.
+Concurrent client simulation.
+PROJECT 05: Async Runtime
+Language: Rust.
+
+Build a miniature asynchronous execution runtime inspired by Tokio.
+
+Implementation:
+
+Futures.
+Executor.
+Task scheduler.
+Waker.
+Polling.
+Thread pools.
+Work stealing.
+Async timers.
+I/O readiness.
+Task cancellation.
+Backpressure.
+Learning interface:
+
+Visualize tasks.
+Show task states.
+Inspect polling and waking.
+Observe scheduling.
+Compare synchronous and asynchronous execution.
+Experiment with task counts and thread counts.
+Provide detailed explanations of ownership, borrowing, Pin, Send, Sync and lifetimes where relevant.
+
+PROJECT 06: Distributed Message Broker
+Language: Rust.
+
+Build a Kafka-inspired message broker.
+
+Implementation:
+
+Topics.
+Partitions.
+Producers.
+Consumers.
+Consumer groups.
+Offset tracking.
+Message persistence.
+Replication.
+Ordering guarantees.
+Leader election.
+Consumer rebalancing.
+Delivery semantics.
+Learning interface:
+
+Interactive producer and consumer.
+Live message-flow visualization.
+Partition explorer.
+Consumer group explorer.
+Offset tracking.
+Replication visualization.
+Simulate broker failures.
+Inspect message delivery guarantees.
+PROJECT 07: Custom Memory Allocator
+Language: C++.
+
+Implementation:
+
+malloc/free-style allocation.
+Arena allocator.
+Slab allocator.
+Pool allocator.
+Memory alignment.
+Fragmentation tracking.
+Thread-local allocation.
+Allocation profiling.
+Leak detection.
+Learning interface:
+
+Interactive heap visualization.
+Allocation and deallocation controls.
+Memory block visualization.
+Fragmentation analysis.
+Alignment demonstrations.
+Compare allocation strategies.
+Benchmark against system malloc.
+Make memory addresses, allocation sizes and fragmentation measurable rather than decorative.
+
+PROJECT 08: Database Query Engine
+Language: C++.
+
+Implementation:
+
+SQL parser.
+Relational algebra.
+Query planner.
+Query optimizer.
+Table scans.
+Index scans.
+Hash joins.
+Sort-merge joins.
+Aggregations.
+Vectorized execution.
+Columnar storage.
+Learning interface:
+
+SQL editor.
+Query execution plan visualization.
+Interactive query tree.
+Step-by-step execution.
+Index selection explanation.
+Join algorithm comparison.
+Query cost estimates.
+Execution metrics.
+Allow users to execute real SQL queries against the engine.
+
+PROJECT 09: HTTP Reverse Proxy and Load Balancer
+Language: Rust.
+
+Implementation:
+
+HTTP proxy.
+TCP connection pooling.
+Round-robin.
+Least connections.
+Consistent hashing.
+Health checks.
+Circuit breakers.
+Retries.
+Rate limiting.
+TLS termination.
+Metrics collection.
+Learning interface:
+
+Create multiple backend servers.
+Send simulated or real requests.
+Observe traffic distribution.
+Change load balancing strategies.
+Kill backend servers.
+Introduce latency.
+Trigger circuit breakers.
+Inspect health checks.
+View request latency and throughput.
+PROJECT 10: Git-like Version Control System
+Language: C++.
+
+Implementation:
+
+Content-addressable storage.
+Blob objects.
+Tree objects.
+Commit objects.
+Hashing.
+Staging.
+Branches.
+Commit history.
+Diff engine.
+Three-way merging.
+Conflict resolution.
+Delta compression.
+Packfiles.
+Learning interface:
+
+Interactive Git-like terminal.
+Commit graph visualization.
+Branch explorer.
+Diff viewer.
+Merge conflict demonstration.
+Object database explorer.
+Storage visualization.
+Inspect underlying Git-like objects.
+
+4. STANDARD LEARNING INTERFACE FOR EVERY PROJECT
+This is the most important part of the entire platform.
+
+Every project must follow a consistent learning experience.
+
+Create these tabs inside every project.
+
+A. Overview
+Explain:
+
+What is this system?
+Why does it exist?
+What problem does it solve?
+Where is it used in real-world infrastructure?
+What alternatives exist?
+What are its limitations?
+Use simple explanations before introducing technical terminology.
+
+B. Architecture
+Provide detailed, interactive architecture diagrams.
+
+Use React Flow.
+
+Diagrams must show:
+
+Every major component.
+Component responsibilities.
+Communication pathways.
+Data flow.
+Internal dependencies.
+External dependencies.
+Storage components.
+Execution boundaries.
+Allow users to:
+
+Click components.
+Inspect descriptions.
+See their implementation files.
+Highlight communication paths.
+Follow a request through the system.
+Zoom and explore complex diagrams.
+Provide multiple architecture views where appropriate:
+
+High-level architecture.
+Internal component architecture.
+Runtime architecture.
+Data-flow architecture.
+Deployment architecture.
+Diagrams must accurately represent the actual implementation, not generic illustrations.
+
+C. Learn Internals
+Break the system into small technical concepts.
+
+For each concept provide:
+
+Simple explanation.
+Why it matters.
+Internal implementation.
+Relevant data structures.
+Code references.
+Execution examples.
+Common mistakes.
+Real-world applications.
+Include step-by-step walkthroughs.
+
+D. Interactive Playground
+This should be the primary learning environment.
+
+Allow users to:
+
+Change configuration.
+Execute commands.
+Start and stop services.
+Generate workloads.
+Change parameters.
+Inspect internal states.
+Reset experiments.
+Every playground must communicate with the real backend implementation.
+
+Do not replace actual system execution with frontend-only mock simulations.
+
+E. Visualizer
+Provide real-time visualization of the system.
+
+Depending on the project, visualize:
+
+Memory allocation.
+Process execution.
+Task scheduling.
+Network communication.
+Database writes.
+Replication.
+Query execution.
+Message delivery.
+Request routing.
+Git object graphs.
+Use actual backend telemetry and execution events.
+
+F. Code Explorer
+Use Monaco Editor.
+
+Allow users to:
+
+Browse source files.
+Understand important implementations.
+Inspect data structures.
+View execution traces.
+See relevant code explanations.
+Explore how components communicate.
+Organize the source code into meaningful modules.
+
+G. Experiments
+Provide predefined guided experiments.
+
+Each experiment must contain:
+
+Objective.
+Background.
+Initial configuration.
+Instructions.
+Expected observations.
+Actual observations.
+Explanation.
+Conclusion.
+Examples:
+
+Kill a database leader.
+Increase concurrent connections.
+Exhaust memory.
+Introduce network latency.
+Compare scheduling algorithms.
+Trigger memory fragmentation.
+H. Benchmarks
+Show:
+
+Throughput.
+Latency.
+P50/P95/P99.
+CPU utilization.
+Memory usage.
+Network throughput.
+Disk I/O.
+Error rate.
+Provide benchmark comparisons across configurations.
+
+Only display metrics collected from real executions. Label simulated workloads clearly.
+
+I. Documentation
+Each project needs detailed technical documentation.
+
+Include:
+
+Architecture.
+Internal design.
+APIs.
+Data structures.
+Algorithms.
+Configuration.
+Installation.
+Execution.
+Testing.
+Benchmarking.
+Deployment.
+Known limitations.
+
+5. EXPERIMENT EXECUTION EXPERIENCE
+Make execution extremely easy.
+
+A user should not need to manually configure Docker, install dependencies or run complex terminal commands to explore a system.
+
+Provide:
+
+Start Experiment.
+Stop Experiment.
+Reset Environment.
+Run Benchmark.
+Inject Failure.
+View Logs.
+Inspect Metrics.
+Each experiment should have an isolated execution environment.
+
+The frontend should send configuration to a backend execution manager.
+
+The execution manager should:
+
+Validate the request.
+Allocate an isolated environment.
+Start the appropriate system.
+Stream execution events.
+Collect metrics.
+Return results.
+Clean up temporary resources.
+Use WebSockets or SSE for live updates.
+
+Provide clear loading, running, completed and failed states.
+
+Implement execution timeouts, CPU limits, memory limits and resource quotas.
+
+Never expose unrestricted shell access to public users.
+
+
+6. LEARNING PATHS
+Create structured learning paths that connect projects.
+
+Example:
+
+Systems Programming Foundations
+Memory allocator.
+Compiler.
+Git implementation.
+Networking and Concurrency
+Async runtime.
+Redis-like database.
+Reverse proxy.
+Databases and Distributed Systems
+Query engine.
+Distributed database.
+Message broker.
+Operating Systems and Infrastructure
+Container runtime.
+Async runtime.
+Reverse proxy.
+Track:
+
+Concepts explored.
+Experiments completed.
+Projects completed.
+Benchmarks executed.
+Learning milestones.
+Do not make progress tracking feel like a generic gamified course.
+
+
+7. ARCHITECTURE AND REPOSITORY STRUCTURE
+Use a monorepo.
+
+Suggested structure:
+
+systems-lab/
+│
+├── apps/
+│ ├── web/ # Next.js frontend
+│ ├── api/ # Application API
+│ └── execution-manager/ # Experiment orchestration
+│
+├── systems/
+│ ├── distributed-db/
+│ ├── container-runtime/
+│ ├── compiler/
+│ ├── redis-engine/
+│ ├── async-runtime/
+│ ├── message-broker/
+│ ├── memory-allocator/
+│ ├── query-engine/
+│ ├── reverse-proxy/
+│ └── version-control/
+│
+├── packages/
+│ ├── ui/
+│ ├── diagrams/
+│ ├── telemetry/
+│ ├── api-client/
+│ └── shared-types/
+│
+├── infrastructure/
+│ ├── docker/
+│ ├── deployment/
+│ ├── monitoring/
+│ └── ci/
+│
+├── docs/
+│ ├── architecture/
+│ ├── development/
+│ └── deployment/
+│
+├── scripts/
+├── docker-compose.yml
+└── README.md
+
+Adjust the structure if a better engineering decision is needed.
+
+Each systems project must be independently buildable and testable.
+
+
+8. DEPLOYMENT REQUIREMENTS
+The platform must be deployable and accessible through a public URL.
+
+Frontend
+Deploy Next.js to Vercel.
+
+API and execution backend
+Deploy to a Linux-based compute environment capable of running persistent processes and containers.
+
+Database
+Use managed PostgreSQL where practical.
+
+Systems workloads
+Use Docker containers with resource restrictions.
+
+Provide separate development and production configurations.
+
+Include:
+
+Dockerfiles.
+Docker Compose.
+Environment variable examples.
+GitHub Actions.
+Health checks.
+Logging.
+Metrics.
+Database migrations.
+Deployment documentation.
+Document the exact deployment steps.
+
+Do not assume Vercel can execute the systems workloads.
+
+Do not expose privileged container runtime access directly to the public internet.
+
+For container-runtime experiments requiring namespaces or cgroups, use dedicated isolated Linux hosts.
+
+
+9. ENGINEERING QUALITY
+This is intended to be a serious engineering portfolio project.
+
+Requirements:
+
+Production-quality code organization.
+Clear separation of concerns.
+Strong typing.
+Error handling.
+Structured logging.
+Unit tests.
+Integration tests.
+End-to-end tests.
+Stress testing.
+Benchmarking.
+CI/CD.
+Security considerations.
+Resource management.
+Graceful shutdown.
+Every systems project must have meaningful tests that validate its actual implementation.
+
+Avoid placeholder implementations, fake metrics, hardcoded results and decorative controls.
+
+Use established algorithms and explain any deliberate simplifications.
+
+
+10. HOW TO BUILD THIS PROJECT
+Do not attempt to implement all ten projects in one massive code-generation operation.
+
+Work incrementally.
+
+Phase 1: Foundation
+Initialize monorepo.
+Build Next.js application.
+Create global design system.
+Set up routing.
+Set up backend API.
+Set up execution manager.
+Set up telemetry.
+Establish local development environment.
+Phase 2: Learning platform
+Project overview pages.
+Architecture explorer.
+Code explorer.
+Interactive playground framework.
+Experiment framework.
+Metrics dashboard.
+Learning paths.
+Phase 3: Systems implementations
+Implement each of the ten systems independently.
+
+For each project:
+
+Write a technical specification.
+Define architecture.
+Identify major components.
+Define interfaces.
+Implement core functionality.
+Add tests.
+Add observability.
+Build the learning interface.
+Create guided experiments.
+Benchmark.
+Document.
+Deploy.
+Phase 4: Integration
+Connect all ten projects to the unified platform.
+
+Ensure consistent navigation, execution management, telemetry, documentation and learning progress.
+
+Phase 5: Production deployment
+Deploy the frontend to Vercel and backend services to suitable compute infrastructure.
+
+Validate the complete production workflow.
+
+
+11. IMPORTANT DEVELOPMENT RULES
+Do not sacrifice implementation quality to finish faster.
+Do not generate all project code in one pass.
+Never build visualizations that misrepresent actual execution.
+Explain complex implementation decisions in documentation.
+Prefer real execution over simulated results.
+Keep every system independently runnable.
+Make the learning interface intuitive enough for someone unfamiliar with the underlying implementation.
+Make advanced implementation details accessible without overwhelming the learner.
+Avoid unnecessary abstractions and overengineering.
+Never claim a feature is implemented until it works and has been tested.
+Maintain a DEVELOPMENT_STATUS.md containing:
+
+Completed components.
+Pending components.
+Known bugs.
+Test results.
+Deployment status.
+Current implementation phase.
+Next actionable tasks.
+At the end of each development phase, provide a concise engineering report.
+
+
+12. DEFINITION OF DONE
+The project is complete only when:
+
+All ten systems have real implementations.
+Each system builds and runs independently.
+Each system has a detailed architecture.
+Every project has an interactive learning interface.
+Every playground interacts with its real implementation.
+Guided experiments work.
+Metrics come from actual execution.
+Tests pass.
+Documentation is complete.
+The frontend is deployed on Vercel.
+The backend and execution infrastructure are deployed separately.
+Users can access and experiment with the systems through the public website.
+Final vision:
+
+A user visits Systems Lab, selects Distributed Database, understands its architecture, explores the source code, starts a five-node cluster, writes data, kills the leader, watches Raft elect a new leader, observes replication, examines the logs and benchmarks the system.
+
+The same experience should exist across all ten systems.
+
+Build this as a cohesive, genuinely functional systems engineering learning platform — not ten disconnected tutorials.
+
+Start by inspecting the repository, proposing the complete architecture and implementation roadmap, and then build Phase 1. Do not begin all ten systems simultaneously.
