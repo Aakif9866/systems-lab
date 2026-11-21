@@ -1,0 +1,6 @@
+:HL["/systems-lab/_next/static/chunks/44k1dfurqo-sb.css","style"]
+:HL["/systems-lab/_next/static/media/9a321a2c78eff0b5-s.p.1bkzbscqrt8rl.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+3:[["children",{"s":"__PAGE__","h":160}]]
+2:[["children",{"s":{"n":"slug","t":"d","k":"redis-engine","s":[]},"h":96,"c":"$Q3"}]]
+1:[["children",{"s":"projects","h":96,"c":"$Q2"}]]
+0:{"b":"pzOQZverfg1X7mOV46EaY","t":{"t":{"s":"","h":80,"c":"$Q1"}}}
